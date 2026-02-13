@@ -30,7 +30,7 @@
 
 <body>
   <h1>Final 8 Leaderboard</h1>
-
+  <p class="update-info">Last Scraped: <span id="timestamp">...</span></p>
   <table id="ladder"></table>
 
   <script>
@@ -39,6 +39,9 @@
     fetch(url)
       .then(res => res.json())
       .then(data => {
+        // --- ADD THIS LINE HERE ---
+            document.getElementById('timestamp').innerText = data[0].LastUpdated;
+            // --------------------------
         if (!data.length) return;
 
         const table = document.getElementById("ladder");

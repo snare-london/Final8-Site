@@ -30,35 +30,43 @@
 
 <body>
   <h1>Final 8 Leaderboard</h1>
-  <p class="update-info">Last Scraped: <span id="timestamp">...</span></p>
+  <p style="color: #666; font-style: italic;">Last Updated: <span id="timestamp">Loading...</span></p>
   <table id="ladder"></table>
 
-  <script>
+<script>
     const url = "https://api.sheetbest.com/sheets/cfe4e2ab-a31c-4894-8926-ed9b3140078b/tabs/Website_View";
 
     fetch(url)
       .then(res => res.json())
       .then(data => {
-        // --- ADD THIS LINE HERE ---
-            document.getElementById('timestamp').innerText = data[0].LastUpdated;
-            // --------------------------
         if (!data.length) return;
+
+        // 1. Set the timestamp (plucking it from the data before we filter)
+        document.getElementById('timestamp').innerText = data[0].LastUpdated;
 
         const table = document.getElementById("ladder");
 
-        // headers
+        // 2. Headers
         const headerRow = document.createElement("tr");
         Object.keys(data[0]).forEach(key => {
+          // --- SKIP THE TIMESTAMP COLUMN ---
+          if (key === "LastUpdated") return; 
+          
           const th = document.createElement("th");
           th.textContent = key;
           headerRow.appendChild(th);
         });
         table.appendChild(headerRow);
 
-        // rows
+        // 3. Rows
         data.forEach(row => {
           const tr = document.createElement("tr");
-          Object.values(row).forEach(value => {
+          
+          // Use Object.entries so we can check the Key and the Value at the same time
+          Object.entries(row).forEach(([key, value]) => {
+            // --- SKIP THE DATA FOR THE TIMESTAMP COLUMN ---
+            if (key === "LastUpdated") return;
+
             const td = document.createElement("td");
             td.textContent = value;
             tr.appendChild(td);
@@ -67,7 +75,7 @@
         });
       })
       .catch(err => console.error(err));
-  </script>
+</script>
 
 </body>
 </html>

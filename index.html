@@ -63,15 +63,26 @@
           const tr = document.createElement("tr");
           
           // Use Object.entries so we can check the Key and the Value at the same time
-          Object.entries(row).forEach(([key, value]) => {
-            // --- SKIP THE DATA FOR THE TIMESTAMP COLUMN ---
+        Object.entries(row).forEach(([key, value]) => {
             if (key === "LastUpdated") return;
 
             const td = document.createElement("td");
-            td.textContent = value;
+            
+            // If this is the "Name" column, make it a link
+            if (key === "Name") {
+                const link = document.createElement("a");
+                link.href = `profile.html?name=${encodeURIComponent(value)}`;
+                link.textContent = value;
+                link.style.color = "#003087";
+                link.style.fontWeight = "bold";
+                td.appendChild(link);
+            } else {
+                td.textContent = value;
+            }
+            
             tr.appendChild(td);
-          });
-          table.appendChild(tr);
+        });
+        table.appendChild(tr);
         });
       })
       .catch(err => console.error(err));

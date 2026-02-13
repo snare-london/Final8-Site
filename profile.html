@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entry Details</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f9; color: #333; line-height: 1.6; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #003087; margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .back-btn { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #003087; font-weight: bold; font-size: 0.9rem; }
+        .answer-card { background: #f9f9f9; padding: 8px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #003087; }
+        .question { display: block; font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+        .answer { display: block; font-size: 1.1rem; font-weight: 600; color: #222; margin-top: 2px; }
+        .loading { text-align: center; color: #999; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <a href="index.html" class="back-btn">← Back to Leaderboard</a>
+        <h1 id="user-name">Loading...</h1>
+        
+        <div id="answers-container">
+            <p class="loading">Fetching entry details...</p>
+        </div>
+    </div>
+
+    <script>
+        // 1. Get the name from the URL
+        const params = new URLSearchParams(window.location.search);
+        const userName = params.get('name');
+
+        if (userName) {
+            document.getElementById('user-name').innerText = userName;
+
+            // 2. Updated URL for the "Form_Responses" tab
+            // We add "/search" to make sure Sheet.best filters the data on their server
+            const url = `https://api.sheetbest.com/sheets/cfe4e2ab-a31c-4894-8926-ed9b3140078b/tabs/Form_Responses/search?Name=${encodeURIComponent(userName)}`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById('answers-container');
+                    container.innerHTML = ""; 
+
+                    // If the search works, 'data' will be an array with 1 person
+                    if (data.length === 0) {
+                        container.innerHTML = "<p>No entries found for this name.</p>";
+                        return;
+                    }
+
+                    const person = data[0];
+                    
+                    // Define exactly which columns you want to show, in the order you want them
+                    const fieldsToShow = ["Name", "Premier", "Other_GF", "Spoon", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "Brownlow", "Coleman", "Bonus"];
+
+                    fieldsToShow.forEach(field => {
+                        const value = person[field]; // Pulls the data for that specific column name
+
+                        const card = document.createElement('div');
+                        card.className = 'answer-card';
+                        card.innerHTML = `
+                            <span class="question">${field}</span>
+                            <span class="answer">${value || 'No Answer'}</span>
+                        `;
+                        container.appendChild(card);
+                    });                })
+                .catch(err => {
+                    console.error("Fetch error:", err);
+                    document.getElementById('answers-container').innerHTML = "Error loading data.";
+                });
+        }
+    </script>
+</body>
+</html>

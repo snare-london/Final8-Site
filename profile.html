@@ -52,16 +52,34 @@
 
                     const person = data[0];
                     
-                    // Define exactly which columns you want to show, in the order you want them
-                    const fieldsToShow = ["Name", "Premier", "Other_GF", "Spoon", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "Brownlow", "Coleman", "Bonus"];
+                    // 1. Define your "Translation Layer"
+                    // "Sheet Header Name": "Nice Display Name"
+                    const fieldMapping = {
+                        "Name": "Name",
+                        "Premier": "Premier",
+                        "OtherGF": "Other Grand Finalist",
+                        "Spoon": "Wooden Spoon",
+                        "1st": "1st",
+                        "2nd": "2nd",
+                        "3rd": "3rd",
+                        "4th": "4th",
+                        "5th": "5th",
+                        "6th": "6th",
+                        "7th": "7th",
+                        "8th": "8th",
+                        "Brownlow": "Brownlow Medallist",
+                        "Coleman": "Coleman Medallist",
+                        "Bonus": "Sacked Pundit",
+                    };
 
-                    fieldsToShow.forEach(field => {
-                        const value = person[field]; // Pulls the data for that specific column name
+                    // 2. Loop through your mapping instead of the whole sheet row
+                    Object.entries(fieldMapping).forEach(([sheetHeader, niceName]) => {
+                        const value = person[sheetHeader]; // Grab the data using the ugly header name
 
                         const card = document.createElement('div');
                         card.className = 'answer-card';
                         card.innerHTML = `
-                            <span class="question">${field}</span>
+                            <span class="question">${niceName}</span> 
                             <span class="answer">${value || 'No Answer'}</span>
                         `;
                         container.appendChild(card);

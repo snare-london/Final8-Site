@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Final 8 Leaderboard</title>
+
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 40px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Final 8 Leaderboard</h1>
+
+  <table id="ladder"></table>
+
+  <script>
+    const url = "https://api.sheetbest.com/sheets/cfe4e2ab-a31c-4894-8926-ed9b3140078b/tabs/Website_View";
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.length) return;
+
+        const table = document.getElementById("ladder");
+
+        // headers
+        const headerRow = document.createElement("tr");
+        Object.keys(data[0]).forEach(key => {
+          const th = document.createElement("th");
+          th.textContent = key;
+          headerRow.appendChild(th);
+        });
+        table.appendChild(headerRow);
+
+        // rows
+        data.forEach(row => {
+          const tr = document.createElement("tr");
+          Object.values(row).forEach(value => {
+            const td = document.createElement("td");
+            td.textContent = value;
+            tr.appendChild(td);
+          });
+          table.appendChild(tr);
+        });
+      })
+      .catch(err => console.error(err));
+  </script>
+
+</body>
+</html>

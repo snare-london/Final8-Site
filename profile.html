@@ -5,14 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entry Details</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f9; color: #333; line-height: 1.6; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1 { color: #003087; margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f9; color: #333; line-height: 1.6; padding: 20px; display: flex; justify-content: center; }
+        .container { max-width: 600px; width: 100%; margin: 0; background: transparent; padding: 10px; border-radius: 12px; }
+        h1 { color: #003087; margin-top: 0; padding-bottom: 10px; font-size: 1.5rem; text-align: center; }
         .back-btn { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #003087; font-weight: bold; font-size: 0.9rem; }
-        .answer-card { background: #f9f9f9; padding: 8px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #003087; }
-        .question { display: block; font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 1px; }
-        .answer { display: block; font-size: 1.1rem; font-weight: 600; color: #222; margin-top: 2px; }
-        .loading { text-align: center; color: #999; font-style: italic; }
+        
+        .answers-table-card { background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 20px; margin-top: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        td { padding: 12px 8px; border-bottom: 1px solid #f1f1f1; color: #222; font-size: 0.95rem; }
+        td:first-child { font-weight: 700; color: #003087; width: auto; text-transform: none; font-size: 0.95rem; letter-spacing: normal; }
+        
+        /* Highlight Styles */
+        .correct-row { background-color: #f0fff4; } /* Light Green */
+        .match-row { background-color: #fffdf0; } /* Light Gold */
+        
+        .badge { font-size: 0.7rem; padding: 3px 7px; border-radius: 4px; margin-left: 10px; text-transform: uppercase; font-weight: bold; display: inline-block; }
+        .correct-badge { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .near-badge { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        
+        .loading { text-align: center; color: #999; font-style: italic; margin-top: 50px; }
     </style>
 </head>
 <body>
@@ -22,72 +33,124 @@
         <h1 id="user-name">Loading...</h1>
         
         <div id="answers-container">
-            <p class="loading">Fetching entry details...</p>
+            <p class="loading">Analyzing entry results...</p>
         </div>
     </div>
 
     <script>
-        // 1. Get the name from the URL
         const params = new URLSearchParams(window.location.search);
         const userName = params.get('name');
 
         if (userName) {
             document.getElementById('user-name').innerText = userName;
 
-            // 2. Updated URL for the "Form_Responses" tab
-            // We add "/search" to make sure Sheet.best filters the data on their server
-            const url = `https://api.sheetbest.com/sheets/cfe4e2ab-a31c-4894-8926-ed9b3140078b/tabs/Form_Responses/search?Name=${encodeURIComponent(userName)}`;
+            const userUrl = `https://api.sheetbest.com/sheets/cfe4e2ab-a31c-4894-8926-ed9b3140078b/tabs/Form_Responses/search?Name=${encodeURIComponent(userName)}`;
+            const resultsUrl = `https://api.sheetbest.com/sheets/cfe4e2ab-a31c-4894-8926-ed9b3140078b/tabs/Results`;
 
-            fetch(url)
-                .then(res => res.json())
-                .then(data => {
-                    const container = document.getElementById('answers-container');
-                    container.innerHTML = ""; 
+            Promise.all([
+                fetch(userUrl).then(res => res.json()),
+                fetch(resultsUrl).then(res => res.json())
+            ])
+            .then(([userData, resultsData]) => {
+                const container = document.getElementById('answers-container');
+                container.innerHTML = ""; 
 
-                    // If the search works, 'data' will be an array with 1 person
-                    if (data.length === 0) {
-                        container.innerHTML = "<p>No entries found for this name.</p>";
-                        return;
+                if (!userData.length) {
+                    container.innerHTML = "<p>No entries found for this name.</p>";
+                    return;
+                }
+
+                const person = userData[0];
+                const results = resultsData[0];
+
+                // --- DATA PREPARATION ---
+                const clean = (val) => val?.toString().toLowerCase().trim() || "";
+
+                // Top 8 Array
+                const ladderPositions = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
+                const officialTop8 = ladderPositions.map(pos => clean(results[pos]));
+
+                // Brownlow Top 3 Array
+                const brownlowTop3 = [results["Brownlow"], results["Brownlow_2nd"], results["Brownlow_3rd"]].map(clean);
+
+                // Coleman Top 3 Array
+                const colemanTop3 = [results["Coleman"], results["Coleman_2nd"], results["Coleman_3rd"]].map(clean);
+
+                // Grand Finalists Array (Premier + Runner Up)
+                const gfTeams = [results["Premier"], results["OtherGF"]].map(clean);
+
+                const fieldMapping = {
+                    "Premier": "Premier",
+                    "OtherGF": "Other Grand Finalist",
+                    "Spoon": "Wooden Spoon",
+                    "1st": "1st", "2nd": "2nd", "3rd": "3rd", "4th": "4th",
+                    "5th": "5th", "6th": "6th", "7th": "7th", "8th": "8th",
+                    "Brownlow": "Brownlow Medallist",
+                    "Coleman": "Coleman Medallist",
+                    "Bonus": "Sacked Pundit",
+                };
+
+                const tableCard = document.createElement('div');
+                tableCard.className = 'answers-table-card';
+                const table = document.createElement('table');
+                const tbody = document.createElement('tbody');
+
+                Object.entries(fieldMapping).forEach(([sheetHeader, niceName]) => {
+                    const userVal = person[sheetHeader];
+                    const userValClean = clean(userVal);
+                    const officialVal = results[sheetHeader];
+                    const officialValClean = clean(officialVal);
+
+                    const row = document.createElement('tr');
+                    let status = null; // 'correct', 'near', or null
+
+                    // 1. Check Exact Match (Winner / Correct Position)
+                    if (officialValClean && officialValClean !== "tbd" && userValClean === officialValClean) {
+                        status = 'correct';
+                    } 
+                    // 2. Check "Near Miss" / Top Group Logic
+                    else if (userValClean !== "" && userValClean !== "tbd") {
+                        if (ladderPositions.includes(sheetHeader) && officialTop8.includes(userValClean)) {
+                            status = 'near';
+                        } else if (sheetHeader === "Brownlow" && brownlowTop3.includes(userValClean)) {
+                            status = 'near';
+                        } else if (sheetHeader === "Coleman" && colemanTop3.includes(userValClean)) {
+                            status = 'near';
+                        } else if (sheetHeader === "OtherGF" && gfTeams.includes(userValClean)) {
+                            status = 'near';
+                        }
                     }
 
-                    const person = data[0];
+                    // Apply UI based on status
+                    if (status === 'correct') row.className = 'correct-row';
+                    if (status === 'near') row.className = 'match-row';
+
+                    const nameTd = document.createElement('td');
+                    nameTd.textContent = niceName;
                     
-                    // 1. Define your "Translation Layer"
-                    // "Sheet Header Name": "Nice Display Name"
-                    const fieldMapping = {
-                        "Name": "Name",
-                        "Premier": "Premier",
-                        "OtherGF": "Other Grand Finalist",
-                        "Spoon": "Wooden Spoon",
-                        "1st": "1st",
-                        "2nd": "2nd",
-                        "3rd": "3rd",
-                        "4th": "4th",
-                        "5th": "5th",
-                        "6th": "6th",
-                        "7th": "7th",
-                        "8th": "8th",
-                        "Brownlow": "Brownlow Medallist",
-                        "Coleman": "Coleman Medallist",
-                        "Bonus": "Sacked Pundit",
-                    };
+                    const valTd = document.createElement('td');
+                    valTd.textContent = userVal || 'No Answer';
 
-                    // 2. Loop through your mapping instead of the whole sheet row
-                    Object.entries(fieldMapping).forEach(([sheetHeader, niceName]) => {
-                        const value = person[sheetHeader]; // Grab the data using the ugly header name
+                    if (status === 'correct') {
+                        valTd.innerHTML += `<span class="badge correct-badge">Correct</span>`;
+                    } else if (status === 'near') {
+                        const label = sheetHeader === "OtherGF" ? "Made GF" : (ladderPositions.includes(sheetHeader) ? "In Top 8" : "In Top 3");
+                        valTd.innerHTML += `<span class="badge near-badge">${label}</span>`;
+                    }
 
-                        const card = document.createElement('div');
-                        card.className = 'answer-card';
-                        card.innerHTML = `
-                            <span class="question">${niceName}</span> 
-                            <span class="answer">${value || 'No Answer'}</span>
-                        `;
-                        container.appendChild(card);
-                    });                })
-                .catch(err => {
-                    console.error("Fetch error:", err);
-                    document.getElementById('answers-container').innerHTML = "Error loading data.";
+                    row.appendChild(nameTd);
+                    row.appendChild(valTd);
+                    tbody.appendChild(row);
                 });
+
+                table.appendChild(tbody);
+                tableCard.appendChild(table);
+                container.appendChild(tableCard);
+            })
+            .catch(err => {
+                console.error("Fetch error:", err);
+                document.getElementById('answers-container').innerHTML = "Error loading data.";
+            });
         }
     </script>
 </body>

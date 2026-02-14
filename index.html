@@ -5,15 +5,20 @@
   <title>Final 8 Leaderboard</title>
 
     <style>
-      body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f9; color: #333; line-height: 1.6; padding: 20px; font-size: 16px; }
-      .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-      h1 { color: #003087; margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 1.5rem; }
+      html, body { margin: 0; }
+      body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f9; color: #333; line-height: 1.6; padding: 20px; font-size: 16px; display: flex; justify-content: center; }
+      .container { max-width: 1400px; margin: 0; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+      h1 { color: #003087; margin: 0; padding-bottom: 5px; font-size: 1.5rem; }
+      h2 { color: #003087; margin-top: 0; margin-bottom: 10px; font-size: 1.1rem; }
       .back-btn { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #003087; font-weight: bold; font-size: 0.9rem; }
-      table { width: auto; border-collapse: collapse; margin-top: 12px; }
+      .tables-wrapper { display: flex; gap: 20px; margin-top: 12px; flex-wrap: wrap; }
+      .table-column { display: flex; flex-direction: column; gap: 20px; }
+      .tables-wrapper > div:not(:first-child) { border-left: 2px solid #ddd; padding-left: 20px; }
+      table { width: auto; border-collapse: collapse; }
       th { text-align: left; padding: 10px 12px; background: #f7fbff; color: #003087; font-weight: 700; border-bottom: 1px solid #eef3f8; font-size: 0.95rem; }
       td { padding: 10px 12px; border-bottom: 1px solid #f1f1f1; color: #222; font-size: 0.95rem; }
       .name-link { color: #003087; font-weight: 700; text-decoration: none; }
-      .timestamp { color: #666; font-style: italic; font-size: 0.95rem; }
+      .timestamp { margin: 0; color: #666; font-style: italic; font-size: 0.95rem; }
 
       @media (max-width: 600px) {
       body { padding: 12px; font-size: 16px; }
@@ -26,63 +31,93 @@
 
 <body>
   <div class="container">
-    <h1>Final 8 Leaderboard</h1>
-    <p class="timestamp">Last Updated: <span id="timestamp">Loading...</span></p>
-    <table id="ladder"></table>
+    <center><h1>2026 Final 8 Tipping Comp</h1>
+    <p class="timestamp">Last Updated: <span id="timestamp">Loading...</span></center></p>
+    <div class="tables-wrapper">
+      <div>
+        <center><h2>Leaderboard</h2></center>
+        <table id="ladder"></table>
+      </div>
+      <div>
+        <center><h2>Current Ladder</h2></center>
+        <table id="websiteViewLadder"></table>
+      </div>
+      <div class="table-column">
+        <div>
+          <center><h2>Season Futures</h2></center>
+          <table id="manualResults"></table>
+        </div>
+        <div>
+          <center> <h2>Current Coleman Standings</h2></center>
+          <table id="coleman"></table>
+        </div>
+      </div>
+    </div>
   </div>
 
 <script>
-    const url = "https://api.sheetbest.com/sheets/cfe4e2ab-a31c-4894-8926-ed9b3140078b/tabs/Website_View";
+    const apiBase = "https://api.sheetbest.com/sheets/cfe4e2ab-a31c-4894-8926-ed9b3140078b/tabs";
 
-    fetch(url)
+    function populateTable(url, tableId) {
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.length) return;
+
+          const table = document.getElementById(tableId);
+
+          // Headers
+          const headerRow = document.createElement("tr");
+          Object.keys(data[0]).forEach(key => {
+            if (key === "LastUpdated") return;
+            
+            const th = document.createElement("th");
+            th.textContent = key;
+            headerRow.appendChild(th);
+          });
+          table.appendChild(headerRow);
+
+          // Rows
+          data.forEach(row => {
+            const tr = document.createElement("tr");
+            
+            Object.entries(row).forEach(([key, value]) => {
+              if (key === "LastUpdated") return;
+
+              const td = document.createElement("td");
+              
+              if (key === "Name") {
+                const link = document.createElement("a");
+                link.href = `profile.html?name=${encodeURIComponent(value)}`;
+                link.textContent = value;
+                link.className = 'name-link';
+                td.appendChild(link);
+              } else {
+                td.textContent = value;
+              }
+              
+              tr.appendChild(td);
+            });
+            table.appendChild(tr);
+          });
+        })
+        .catch(err => console.error(err));
+    }
+
+    // Set timestamp from first table
+    fetch(apiBase + "/Website_View")
       .then(res => res.json())
       .then(data => {
-        if (!data.length) return;
-
-        // 1. Set the timestamp (plucking it from the data before we filter)
-        document.getElementById('timestamp').innerText = data[0].LastUpdated;
-
-        const table = document.getElementById("ladder");
-
-        // 2. Headers
-        const headerRow = document.createElement("tr");
-        Object.keys(data[0]).forEach(key => {
-          // --- SKIP THE TIMESTAMP COLUMN ---
-          if (key === "LastUpdated") return; 
-          
-          const th = document.createElement("th");
-          th.textContent = key;
-          headerRow.appendChild(th);
-        });
-        table.appendChild(headerRow);
-
-        // 3. Rows
-        data.forEach(row => {
-          const tr = document.createElement("tr");
-          
-          // Use Object.entries so we can check the Key and the Value at the same time
-        Object.entries(row).forEach(([key, value]) => {
-            if (key === "LastUpdated") return;
-
-            const td = document.createElement("td");
-            
-            // If this is the "Name" column, make it a link
-          if (key === "Name") {
-            const link = document.createElement("a");
-            link.href = `profile.html?name=${encodeURIComponent(value)}`;
-            link.textContent = value;
-            link.className = 'name-link';
-            td.appendChild(link);
-          } else {
-                td.textContent = value;
-            }
-            
-            tr.appendChild(td);
-        });
-        table.appendChild(tr);
-        });
+        if (data.length) {
+          document.getElementById('timestamp').innerText = data[0].LastUpdated;
+        }
       })
       .catch(err => console.error(err));
+
+    populateTable(apiBase + "/Website_View", "ladder");
+    populateTable(apiBase + "/Website_View_Ladder", "websiteViewLadder");
+    populateTable(apiBase + "/Website_View_Coleman", "coleman");
+    populateTable(apiBase + "/Website_View_ManualResults", "manualResults");
 </script>
 
 </body>

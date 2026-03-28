@@ -71,7 +71,7 @@
   </div>
 
 <script>
-    const apiBase = "https://api.sheetbest.com/sheets/cfe4e2ab-a31c-4894-8926-ed9b3140078b/tabs";
+    const apiBase = "https://script.google.com/macros/s/AKfycbxD1KWiQL_W5mwwzpQrBbK0hYyttiFUodhAOzzwGU3zRowpmNisbtxFHu-CpY5uSE5V/exec";
 
     function populateTable(url, tableId) {
       fetch(url)
@@ -107,6 +107,8 @@
                 link.textContent = value;
                 link.className = 'name-link';
                 td.appendChild(link);
+              } else if (key.includes("%")) {
+                td.textContent = (parseFloat(value) * 100).toFixed(2) + "%";
               } else {
                 td.textContent = value;
               }
@@ -120,19 +122,20 @@
     }
 
     // Set timestamp from first table
-    fetch(apiBase + "/Website_View")
+    fetch(apiBase + "?tab=Website_View")
       .then(res => res.json())
       .then(data => {
         if (data.length) {
-          document.getElementById('timestamp').innerText = data[0].LastUpdated;
+          const date = new Date(data[0].LastUpdated);
+          document.getElementById('timestamp').innerText = date.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
       })
       .catch(err => console.error(err));
 
-    populateTable(apiBase + "/Website_View", "ladder");
-    populateTable(apiBase + "/Website_View_Ladder", "websiteViewLadder");
-    populateTable(apiBase + "/Website_View_Coleman", "coleman");
-    populateTable(apiBase + "/Website_View_ManualResults", "manualResults");
+    populateTable(apiBase + "?tab=Website_View", "ladder");
+    populateTable(apiBase + "?tab=Website_View_Ladder", "websiteViewLadder");
+    populateTable(apiBase + "?tab=Website_View_Coleman", "coleman");
+    populateTable(apiBase + "?tab=Website_View_ManualResults", "manualResults");
 </script>
 
 </body>

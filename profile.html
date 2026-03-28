@@ -49,8 +49,8 @@
         if (userName) {
             document.getElementById('user-name').innerText = userName;
 
-            const userUrl = `https://api.sheetbest.com/sheets/cfe4e2ab-a31c-4894-8926-ed9b3140078b/tabs/Form_Responses/search?Name=${encodeURIComponent(userName)}`;
-            const resultsUrl = `https://api.sheetbest.com/sheets/cfe4e2ab-a31c-4894-8926-ed9b3140078b/tabs/Results`;
+            const userUrl = `https://script.google.com/macros/s/AKfycbxD1KWiQL_W5mwwzpQrBbK0hYyttiFUodhAOzzwGU3zRowpmNisbtxFHu-CpY5uSE5V/exec?tab=Form_Responses&action=search&Name=${encodeURIComponent(userName)}`;
+            const resultsUrl = `https://script.google.com/macros/s/AKfycbxD1KWiQL_W5mwwzpQrBbK0hYyttiFUodhAOzzwGU3zRowpmNisbtxFHu-CpY5uSE5V/exec?tab=Results`;
 
             Promise.all([
                 fetch(userUrl).then(res => res.json()),

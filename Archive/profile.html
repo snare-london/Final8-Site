@@ -21,7 +21,7 @@
         
         /* Highlight Styles */
         .correct-row { background-color: #e8f5f0; } /* Light Teal */
-        .match-row { background-color: #fff8e1; }   /* Light Amber */
+        .match-row { background-color: #fff8e1; } /* Light Amber */
         
         .badge { font-size: 0.75rem; padding: 5px 10px; border-radius: 3px; margin-left: 12px; text-transform: uppercase; font-weight: 700; display: inline-block; letter-spacing: 0.5px; }
         .correct-badge { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
@@ -84,7 +84,6 @@
 
                 // Grand Finalists Array (Premier + Runner Up)
                 const gfTeams = [results["Premier"], results["OtherGF"]].map(clean);
-                const otherGFFavourite = clean(results["OtherGF"]);
 
                 const fieldMapping = {
                     "Premier": "Premier",
@@ -125,9 +124,6 @@
                             status = 'near';
                         } else if (sheetHeader === "OtherGF" && gfTeams.includes(userValClean)) {
                             status = 'near';
-                        } else if (sheetHeader === "Premier" && otherGFFavourite && userValClean === otherGFFavourite) {
-                            // Picked the Other GF favourite for Premier
-                            status = 'near';
                         }
                     }
 
@@ -144,14 +140,7 @@
                     if (status === 'correct') {
                         valTd.innerHTML += `<span class="badge correct-badge">Correct</span>`;
                     } else if (status === 'near') {
-                        let label = "In Top 3";
-                        if (sheetHeader === "Premier") {
-                            label = "Grand Finalist";
-                        } else if (sheetHeader === "OtherGF") {
-                            label = "Made GF";
-                        } else if (ladderPositions.includes(sheetHeader)) {
-                            label = "In Top 8";
-                        }
+                        const label = sheetHeader === "OtherGF" ? "Made GF" : (ladderPositions.includes(sheetHeader) ? "In Top 8" : "In Top 3");
                         valTd.innerHTML += `<span class="badge near-badge">${label}</span>`;
                     }
 

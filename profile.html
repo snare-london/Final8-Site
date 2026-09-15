@@ -71,6 +71,11 @@
 
                 // --- DATA PREPARATION ---
                 const clean = (val) => val?.toString().toLowerCase().trim() || "";
+                const resultFor = (key, aliases = []) => {
+                    const normalizedKeys = [key, ...aliases].map(value => value.toLowerCase().replace(/[\s_-]/g, ""));
+                    const actualKey = Object.keys(results).find(resultKey => normalizedKeys.includes(resultKey.toLowerCase().replace(/[\s_-]/g, "")));
+                    return actualKey ? results[actualKey] : undefined;
+                };
 
                 // Top 8 Array
                 const ladderPositions = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
@@ -83,8 +88,9 @@
                 const colemanTop3 = [results["Coleman"], results["Coleman_2nd"], results["Coleman_3rd"]].map(clean);
 
                 // Grand Finalists Array (Premier + Runner Up)
-                const gfTeams = [results["Premier"], results["OtherGF"]].map(clean);
-                const otherGFFavourite = clean(results["OtherGF"]);
+                const otherGFValue = resultFor("OtherGF", ["Other GF", "Other Grand Finalist"]);
+                const gfTeams = [results["Premier"], otherGFValue].map(clean);
+                const otherGFFavourite = clean(otherGFValue);
 
                 const fieldMapping = {
                     "Premier": "Premier",
@@ -105,7 +111,7 @@
                 Object.entries(fieldMapping).forEach(([sheetHeader, niceName]) => {
                     const userVal = person[sheetHeader];
                     const userValClean = clean(userVal);
-                    const officialVal = results[sheetHeader];
+                    const officialVal = sheetHeader === "OtherGF" ? otherGFValue : results[sheetHeader];
                     const officialValClean = clean(officialVal);
 
                     const row = document.createElement('tr');
@@ -125,8 +131,7 @@
                             status = 'near';
                         } else if (sheetHeader === "OtherGF" && gfTeams.includes(userValClean)) {
                             status = 'near';
-                        } else if (sheetHeader === "Premier" && otherGFFavourite && userValClean === otherGFFavourite) {
-                            // Picked the Other GF favourite for Premier
+                        } else if (sheetHeader === "Premier" && userValClean === otherGFFavourite) {
                             status = 'near';
                         }
                     }
